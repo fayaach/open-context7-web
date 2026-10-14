@@ -18,7 +18,9 @@ export default function AddFromRepositoryForm() {
     e.preventDefault()
     setLoading(true)
     setError(null)
-
+    
+    console.log('Submitting form data:', formData)
+    
     try {
       await apiClient.createLibrary({
         repoUrl: formData.repoUrl,
@@ -29,9 +31,9 @@ export default function AddFromRepositoryForm() {
     } catch (err) {
       console.error('Error creating library:', err)
       if (err instanceof Error) {
-        setError(`${err.message}`)
+        setError(`Error: ${err.message}`)
       } else {
-        setError('Failed to create library. Please check your repository URL and access token.')
+        setError(`Failed to create library. Check console for details.`)
       }
     } finally {
       setLoading(false)
@@ -95,12 +97,11 @@ export default function AddFromRepositoryForm() {
           name="accessToken"
           value={formData.accessToken}
           onChange={handleInputChange}
-          required
           className="block w-full min-w-0 px-3 py-2 border border-stone-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           style={{ width: '500px', minWidth: '500px' }}
         />
         <p className="mt-1 text-xs text-stone-500">
-          GitLab access token with read permissions
+          GitLab access token (optional, required for private repositories)
         </p>
       </div>
 
@@ -119,7 +120,7 @@ export default function AddFromRepositoryForm() {
 
       <button
         type="submit"
-        disabled={loading || !formData.repoUrl || !formData.accessToken}
+        disabled={loading || !formData.repoUrl}
         className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-stone-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
       >
         {loading ? (

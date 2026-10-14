@@ -1,6 +1,6 @@
 // API client for connecting to FastAPI backend
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9000/api/v1'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 export interface Library {
   id: string
@@ -27,7 +27,7 @@ export interface BaseResponse {
 
 export interface CreateLibraryRequest {
   repoUrl: string
-  accessToken: string
+  accessToken?: string
 }
 
 export interface CreateFromContentRequest {
@@ -54,7 +54,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`
-    
+
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -69,13 +69,13 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config)
-      
+
       // Check for HTTP-level errors
       if (!response.ok) {
         const data = await response.json().catch(() => ({}))
         throw new Error(data.error || data.detail || data.message || `HTTP ${response.status}: ${response.statusText}`)
       }
-      
+
       // For text responses (like document queries), return text directly
       if (endpoint.includes('/query') || response.headers.get('content-type')?.includes('text/plain')) {
         return response.text() as T
@@ -83,7 +83,7 @@ class ApiClient {
 
       // Parse JSON response data
       const data = await response.json()
-      
+
       // Check for business logic errors (retcode != 0)
       if (data.retcode !== undefined && data.retcode !== 0) {
         throw new Error(data.error || data.message || `业务错误，错误码: ${data.retcode}`)
@@ -104,7 +104,7 @@ class ApiClient {
     offset?: number
   }): Promise<SearchLibrariesResponse> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.query) searchParams.set('query', params.query)
     if (params?.limit) searchParams.set('limit', params.limit.toString())
     else searchParams.set('limit', '10')
@@ -144,10 +144,10 @@ class ApiClient {
     tag?: string
   ): Promise<string> {
     const searchParams = new URLSearchParams()
-    
+
     if (params?.topic) searchParams.set('topic', params.topic)
     if (params?.tokens) searchParams.set('tokens', params.tokens.toString())
-    
+
     const path = tag ? `/${org}/${project}/${tag}` : `/${org}/${project}`
     const url = `${path}?${searchParams.toString()}`
 
@@ -158,7 +158,7 @@ class ApiClient {
   async getTags(org: string, project: string): Promise<string[]> {
     try {
       const response = await this.request<{ data: string[] } | string[]>(`/${org}/${project}/tags`)
-      
+
       // Handle different response formats
       if (Array.isArray(response)) {
         return response
